@@ -30,9 +30,16 @@ function draw(){
   var mjo2    = {name: "mjo2"}
   var tom    = {name: "tom"}
   var pj      = {name: "pj"};
-  var claire = {name: "claaare", spouses: [tom], children: [pj]}
-  var ted    = {name: "ted"}
-  var tim    = {name: "tim"}
+    var a1      = {name: "a1"};
+    var a2      = {name: "a2"};
+
+  var aj      = {name: "aj", children: [a1,a2]};
+  var cj      = {name: "cj"};
+  var claire = {name: "claaare", spouses: [tom], children: [pj,aj,cj]}
+  var t1 = {name: "t1" };
+  var t2 = {name: "t2" };
+  var ted    = {name: "ted", xhildren: [t1,t2]}
+  var tim    = {name: "tim", children: [t1,t2]}
   var jill   = {name: "jill", children: ["zzzzzz"]}
   var aaa    = {name: "aaa", children: ["a","b","c"]}
   var bbb    = {name: "bbb", children: ["a","b","c"]}
@@ -62,6 +69,7 @@ function rowsToString(rows){
 }
 
 function calc_segment(x0,y0,segment){
+  //if( !segment ) return;
   if( !segment.rows ) segment.rows = [];
   if( !segment.location ) segment.location = [];
   calc_person(x0,y0,segment);
@@ -80,15 +88,30 @@ function draw_segment(segment){
           for( var k=0; k<segment.spouses.length; k++ ){
             var p = segment.spouses[k];
             translate(p.location[X],0);
+            rect(-XW, PH/2-5, XW, 10); 
             draw_sperson(p.location,p.name,BLUE);
             translate(-p.location[X],0);
           }
           translate(-segment.location[W],0);
         }
       
-        if( segment.children) for( var k=0; k<segment.children.length; k++ ){
-          var child = segment.children[k];
-          draw_segment(child);
+        var mid1, mid;
+        if( segment.children) {
+          for( var k=0; k<segment.children.length; k++ ){
+            var child = segment.children[k];
+            mid = child.location[0]+PW/2;
+            stroke(RED);
+            if( k==0 ){
+              mid1 = mid;
+              // upper half on the first child
+              line(mid,PH,mid,PH+CVS);
+            }
+            // lower half on every child
+            line(mid,PH+CVS/2,mid,PH+CVS);
+            draw_segment(child);
+          }
+          stroke(RED);
+          line(mid1,PH+CVS/2,mid,PH+CVS/2);
         }
         
   translate(-segment.location[X],-segment.location[Y]);
@@ -147,24 +170,32 @@ function calc_children(segment){
 
   var wide = 0;
   var high = 0;
-  var x = segment.location[X];        // first child X position
+  var x = 0;         // first child X position
   var y = segment.location[H] +CVS;   // all children Y position
   
-  print("calc children of "+segment.name+"  at "+x+","+y);
+  print("calc children of "+segment.name+"  at "+x+","+y+"  length="+children.length);
 
-  
   for( var i=0; i<children.length; i++ ){
     var child = children[i];
+    print(i+" here "+child);
     calc_segment(x,y,child);
     print("*** child");
     print_segment(child);
-    var w = child.rows[0][0];
+    var w = maxWidthFrom(child.rows);
     var h = child.rows[0][1];
     wide += CHS + w;
     high = Math.max(high,h);
     x += CHS + w; // shift right
   }
   segment.rows.push([wide,high]);
+}
+
+function maxWidthFrom(rows){
+  var wide = 0;
+  for( var i=0; i<rows.length; i++ ){
+    wide = Math.max(wide,rows[i][0]);
+  }
+  return wide;
 }
 
 function adjustRowsToRight(rows,accum){
