@@ -22,7 +22,7 @@ var XW = CHS;   // spouse connector width
 var XH = 10;    // spouse connector height
 var XT = PH/2-XH/2;  // connector top
 
-var trace_on = false;
+var person = false;
 
 var depth = 0;
 
@@ -63,8 +63,8 @@ function draw(){
   var ccc  = {name: "ccc" }
   var ann  = {name: "anne", spouses: [bill], children: [aaa,bbb]};
   
-  //process_set([pat,jim,ann]);
-  process_set([claire]);
+  process_set([pat,jim,ann]);
+  //process_set([jim]);
 }
 
 function process_set(set){
@@ -89,7 +89,6 @@ function calc_children(parent){
   var children = parent.children;
   if( !children || children.length == 0 ) return;
   
-  trace_on = false;
   print("calc children for "+parent.name);
 
   var x = 0; // hangs under parent    
@@ -98,44 +97,36 @@ function calc_children(parent){
   trace(parent.name+": child rows = "+rowsToString(rows));
   // concat child rows to the parent rows
   parent.rows = parent.rows.concat(rows);
-  trace_on = false
 }
 
 function calc_spouses(segment){
   var spouses = segment.spouses;
   if( !spouses || spouses.length == 0 ) return;
-  trace("calc spouses of "+segment.name+" count = "+spouses.length);
+  print("calc spouses of "+segment.name+" count = "+spouses.length);
   
-  trace_on = false;
-
   var rows = calc_set(PW+XW,0,spouses);
-  trace("spouse1 of "+segment.name+" rows = "+rowsToString(rows));
-  segment.rows[0][0] = rows[0][0];
+  segment.rows[0][0] = rows[0][0] + PW+XW;
   segment.rows[0][1] = rows[0][1];
-  trace("spouse2 of "+segment.name+" rows = "+rowsToString(segment.rows));
-  
-  trace_on = false;
+  print(segment.name+" now has rows = "+rowsToString(segment.rows));
 }
 
 function calc_set(x0,y0,set){
   trace("calc set at "+x0+","+y0+"  length="+set.length);
 
-  var x = x0;   
-  var rows = [[x0,PH]];
+  var rows = [[0,PH]];
   for( var i=0; i<set.length; i++ ){
-    var peer = set[i];
-    print(peer.name+" x = "+x);
-    calc_segment(x,y0,peer);
-    
-    //var offset = maxWidthFrom(peer.rows);
-    
-    //offset = fit(rows,peer.rows);
-    
-    x += fit(rows,peer.rows) + CHS;
+    var person = set[i];
+    calc_segment(0,y0,person);
+    // now that we know the profile (eg. depth) of the
+    // new person segement we can position it up against
+    // growing left segments by shifting it over
+    var x = fit(rows,person.rows);
+    if( x>0 ) x += CHS;
+    shift_segment(person,x+x0);
     
     trace("pre rows "+i+" : "+rowsToString(rows));
-    trace("peer rows "+i+" : "+rowsToString(peer.rows));
-    rows = merge(rows,peer.rows);
+    trace("person rows "+i+" : "+rowsToString(person.rows));
+    rows = merge(rows,person.rows);
     trace("result rows "+i+" : "+rowsToString(rows));
   }
   trace("final rows: "+rowsToString(rows));
@@ -143,15 +134,22 @@ function calc_set(x0,y0,set){
   return rows;
 }
 
+function shift_segment(segment,offset){
+  print("shift: "+segment.name+" by x = "+offset+" from "+segment.location[0]);
+  segment.location[0] += offset;
+  //if( segment.spouses  ) for( var i=0; i<segment.spouses.length; i++ ) shift_segment(segment.spouses[i],offset);
+  // do not shift the children because their locations are relative to the parent segment
+}
+
 function fit(left,right){
-  return maxWidthFrom(right);
-  print("left = "+rowsToString(left));
-  print("right = "+rowsToString(right));
-  return maxWidthFromPortion(left,right.length)
+  return maxWidthFrom(left);
+  // print("left = "+rowsToString(left));
+  // print("right = "+rowsToString(right));
+  // return maxWidthFromPortion(left,right.length)
 }
 
 function merge(target, source){
-  trace_on = false;
+  person = false;
   trace("merge: target = "+rowsToString(target));
   trace("merge: source = "+rowsToString(source));
   
@@ -180,7 +178,7 @@ function merge(target, source){
     trace(i+": "+max_width+" << "+sw+" ==> "+rw);
 
     rows[i] = [rw,rh];
-    trace_on = false;
+    person = false;
   }
   trace("merge: result = "+rowsToString(rows));
   return rows;
@@ -279,7 +277,7 @@ function maxWidthFromPortion(rows,len){
 }
 
 function trace(a1,a2,a3,a4,a5){
-  if( trace_on ) {
+  if( person ) {
     var line = a1;
     if( a2 ) line += " "+a2;
     if( a3 ) line += " "+a3;
