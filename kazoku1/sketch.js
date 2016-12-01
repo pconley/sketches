@@ -89,7 +89,7 @@ function calc_children(parent){
   var children = parent.children;
   if( !children || children.length == 0 ) return;
   
-  print("calc children for "+parent.name);
+  //result"calc children for "+parent.name);
 
   var x = 0; // hangs under parent    
   var y = parent.location[H] + CVS;
@@ -102,54 +102,44 @@ function calc_children(parent){
 function calc_spouses(segment){
   var spouses = segment.spouses;
   if( !spouses || spouses.length == 0 ) return;
-  print("calc spouses of "+segment.name+" count = "+spouses.length);
+  trace("calc spouses of "+segment.name+" count = "+spouses.length);
   
   var rows = calc_set(PW+XW,0,spouses);
   segment.rows[0][0] = rows[0][0] + PW+XW;
   segment.rows[0][1] = rows[0][1];
-  print(segment.name+" now has rows = "+rowsToString(segment.rows));
+  trace(segment.name+" now has rows = "+rowsToString(segment.rows));
 }
 
 function calc_set(x0,y0,set){
-  trace("calc set at "+x0+","+y0+"  length="+set.length);
-
-  var rows = [[0,PH]];
+  //print("calc set at "+x0+","+y0+"  length="+set.length);
+  var result = [];
   for( var i=0; i<set.length; i++ ){
     var person = set[i];
     calc_segment(0,y0,person);
-    // now that we know the profile (eg. depth) of the
-    // new person segement we can position it up against
-    // growing left segments by shifting it over
-    var x = fit(rows,person.rows);
-    if( x>0 ) x += CHS;
-    shift_segment(person,x+x0);
-    
-    trace("pre rows "+i+" : "+rowsToString(rows));
-    trace("person rows "+i+" : "+rowsToString(person.rows));
-    rows = merge(rows,person.rows);
-    trace("result rows "+i+" : "+rowsToString(rows));
+    // now that we know the profile (eg. rows) of the new person segement, so
+    // we can position it up against growing left segments by shifting it over
+    var offset = fit(result,person.rows);
+    if( offset>0 ) offset += CHS;
+    person.location[0] += offset+x0;
+    // now calculate the new set of rows for the growing left
+    result = merge(result,person.rows);
   }
-  trace("final rows: "+rowsToString(rows));
-
-  return rows;
-}
-
-function shift_segment(segment,offset){
-  print("shift: "+segment.name+" by x = "+offset+" from "+segment.location[0]);
-  segment.location[0] += offset;
-  //if( segment.spouses  ) for( var i=0; i<segment.spouses.length; i++ ) shift_segment(segment.spouses[i],offset);
-  // do not shift the children because their locations are relative to the parent segment
+  return result;
 }
 
 function fit(left,right){
-  return maxWidthFrom(left);
-  // print("left = "+rowsToString(left));
-  // print("right = "+rowsToString(right));
-  // return maxWidthFromPortion(left,right.length)
+  // returns the max width from the left side based
+  // on the depth of the right side so that the right
+  // can "fit" into the profile of the left
+  var wide = 0;
+  var m = Math.min(right.length,left.length);
+  for( var i=0; i<m; i++ ){
+    wide = Math.max(wide,left[i][0]);
+  }
+  return wide;
 }
 
 function merge(target, source){
-  person = false;
   trace("merge: target = "+rowsToString(target));
   trace("merge: source = "+rowsToString(source));
   
@@ -157,12 +147,8 @@ function merge(target, source){
   if( !target ) return source.slice(0);
   
   var rows = []; // the resulting rows
-  var max_width = maxWidthFrom(target);
+  var max_width =fit(target,source);
   var len = Math.max(target.length,source.length);
-  
-  //var temp = fit(target,source)
-  //trace("temp = "+temp);
-  //max_width = temp; // Eureka
   
   for( var i=0; i<len; i++ ){
     
@@ -175,17 +161,16 @@ function merge(target, source){
     rw = max_width+sw; // simple uses the max width
     if( max_width>0 && sw>0 ) rw += CHS;
     
-    trace(i+": "+max_width+" << "+sw+" ==> "+rw);
+    //print(i+": "+max_width+" << "+sw+" ==> "+rw);
 
     rows[i] = [rw,rh];
-    person = false;
   }
   trace("merge: result = "+rowsToString(rows));
   return rows;
 }
 
 function calc_segment(x0,y0,segment){
-  print("calc segment name="+segment.name);
+  //print("calc segment name="+segment.name);
   if( !segment.rows ) segment.rows = [];
   if( !segment.location ) segment.location = [];
   calc_person(x0,y0,segment);
@@ -267,14 +252,6 @@ function maxWidthFrom(rows){
   return wide;
 }
 
-function maxWidthFromPortion(rows,len){
-  var wide = 0;
-  var m = Math.min(len,rows.length);
-  for( var i=0; i<m; i++ ){
-    wide = Math.max(wide,rows[i][0]);
-  }
-  return wide;
-}
 
 function trace(a1,a2,a3,a4,a5){
   if( person ) {
