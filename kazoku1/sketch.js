@@ -15,10 +15,10 @@ var H = 3;
 var PW = 60;    // person width
 var PH = 40;    // person height
 
-var CHS = 20;   // child horizontal spaces
+var CHS = 10;   // child horizontal spaces
 var CVS = 40;   // child vertical spacer
 
-var XW = 20;    // spouse connector width
+var XW = CHS;   // spouse connector width
 var XH = 10;    // spouse connector height
 var XT = PH/2-XH/2;  // connector top
 
@@ -28,42 +28,166 @@ var depth = 0;
 
 function draw(){
   
-  var mjo    = {name: "mary jo"}
-  var mjo2    = {name: "mjo2"}
   var tom    = {name: "tom"}
-  var pj      = {name: "pj"};
-    var a1      = {name: "a1"};
-    var a2      = {name: "a2"};
-
-  var aj      = {name: "aj", children: [a1,a2]};
-  var cj      = {name: "cj"};
+  var pj     = {name: "pj"};
+  var pa1    = {name: "pa1"};
+  var pa2    = {name: "pa2"};
+  var aj     = {name: "aj", children: [pa1,pa2]};
+  var cj     = {name: "cj"};
+  var mjo    = {name: "mary jo"}
+  var mjo2   = {name: "mjo2"}
   var claire = {name: "claaare", spouses: [tom], children: [pj,aj,cj]}
-  var t1 = {name: "t1" };
-  var t2 = {name: "t2" };
-  var ted    = {name: "ted", xhildren: [t1,t2]}
+  var t1     = {name: "t1" };
+  var t2     = {name: "t2" };
+  var z1     = {name: "z1" };
+  var z2     = {name: "z2" };
+  var z3     = {name: "z3" };
+  var ted    = {name: "ted", children: [z1,z2]}
   var tim    = {name: "tim", children: [t1,t2]}
-  var jill   = {name: "jill", children: ["zzzzzz"]}
-  var aaa    = {name: "aaa", children: ["a","b","c"]}
-  var bbb    = {name: "bbb", children: ["a","b","c"]}
-  var xxx    = {name: "xxx"}
+  var pat    = {name: "patty", spouses: [mjo,mjo2], children: [claire,ted,tim]};
+  
+  var xxx    = {name: "xxx"};
+  var zzz    = {name: "zzz"};
+  var www    = {name: "www"};
+  var jill   = {name: "jill"};
   var matt   = {name: "matty"}
-  var andrew = {name: "andrew", spouses: ["audrey"], children: ["aaa"]}
+  var aud    = {name: "matty"}
+  var andrew = {name: "andrew", spouses: [aud], children: [zzz]}
+  var jim    = {name: "jim", spouses: [jill,xxx], xhildren: [matt,andrew]};
+
+  var bill = {name: "bill" };
+  var a1   = {name: "a1"};
+  var a2   = {name: "a2"};
+  var aaa  = {name: "aaa", children: [a1,a2]}
+  var bbb  = {name: "bbb" }
+  var ccc  = {name: "ccc" }
+  var ann  = {name: "anne", spouses: [bill], children: [aaa,bbb]};
   
-  var pat = {rows: [], name: "patty", spouses: [mjo,mjo2], children: [claire,ted,tim]};
-  var ann = {name: "anne", spouses: ["bill"], children: [aaa,"bbb"]};
-  var jim = {name: "jim", spouses: [jill,xxx], children: [matt,andrew]};
-  
-  offset(10,10,function(){
-    offset(30,40,function(){
-      calc_segment(0,0,pat);
-      draw_segment(pat);
-      //print_segment(pat);
+  //process_set([pat,jim,ann]);
+  process_set([claire]);
+}
+
+function process_set(set){
+  // CALCULATION PHASE
+  var rows = calc_set(0,0,set);
+  var w = maxWidthFrom(rows);
+  var h = PH + (PH+CVS) * (rows.length-1)
+  // DEBUG the Calculations
+  trace("set = "+rowsToString(rows));
+  // DRAWING PHASE
+  offset(20,20,function(){
+    var v_margin = 40;
+    var h_margin = 30;
+    offset(h_margin,v_margin,function(){
+      for( var i=0; i<set.length; i++ ) draw_segment(set[i]);
     });
-    draw_frame(650,350); // TODO: dynamic size
+    draw_frame(w+2*h_margin,h+2*v_margin);
   });
 }
 
+function calc_children(parent){
+  var children = parent.children;
+  if( !children || children.length == 0 ) return;
+  
+  trace_on = false;
+  print("calc children for "+parent.name);
+
+  var x = 0; // hangs under parent    
+  var y = parent.location[H] + CVS;
+  var rows = calc_set(x,y,children);
+  trace(parent.name+": child rows = "+rowsToString(rows));
+  // concat child rows to the parent rows
+  parent.rows = parent.rows.concat(rows);
+  trace_on = false
+}
+
+function calc_spouses(segment){
+  var spouses = segment.spouses;
+  if( !spouses || spouses.length == 0 ) return;
+  trace("calc spouses of "+segment.name+" count = "+spouses.length);
+  
+  trace_on = false;
+
+  var rows = calc_set(PW+XW,0,spouses);
+  trace("spouse1 of "+segment.name+" rows = "+rowsToString(rows));
+  segment.rows[0][0] = rows[0][0];
+  segment.rows[0][1] = rows[0][1];
+  trace("spouse2 of "+segment.name+" rows = "+rowsToString(segment.rows));
+  
+  trace_on = false;
+}
+
+function calc_set(x0,y0,set){
+  trace("calc set at "+x0+","+y0+"  length="+set.length);
+
+  var x = x0;   
+  var rows = [[x0,PH]];
+  for( var i=0; i<set.length; i++ ){
+    var peer = set[i];
+    print(peer.name+" x = "+x);
+    calc_segment(x,y0,peer);
+    
+    //var offset = maxWidthFrom(peer.rows);
+    
+    //offset = fit(rows,peer.rows);
+    
+    x += fit(rows,peer.rows) + CHS;
+    
+    trace("pre rows "+i+" : "+rowsToString(rows));
+    trace("peer rows "+i+" : "+rowsToString(peer.rows));
+    rows = merge(rows,peer.rows);
+    trace("result rows "+i+" : "+rowsToString(rows));
+  }
+  trace("final rows: "+rowsToString(rows));
+
+  return rows;
+}
+
+function fit(left,right){
+  return maxWidthFrom(right);
+  print("left = "+rowsToString(left));
+  print("right = "+rowsToString(right));
+  return maxWidthFromPortion(left,right.length)
+}
+
+function merge(target, source){
+  trace_on = false;
+  trace("merge: target = "+rowsToString(target));
+  trace("merge: source = "+rowsToString(source));
+  
+  // if no target, return copy of source
+  if( !target ) return source.slice(0);
+  
+  var rows = []; // the resulting rows
+  var max_width = maxWidthFrom(target);
+  var len = Math.max(target.length,source.length);
+  
+  //var temp = fit(target,source)
+  //trace("temp = "+temp);
+  //max_width = temp; // Eureka
+  
+  for( var i=0; i<len; i++ ){
+    
+    var th = 0; if(target[i]) th=target[i][1];
+    var sh = 0; if(source[i]) sh=source[i][1];
+    var rh = Math.max(th,sh)
+    
+    var tw = 0; if(target[i]) tw=target[i][0];
+    var sw = 0; if(source[i]) sw=source[i][0];
+    rw = max_width+sw; // simple uses the max width
+    if( max_width>0 && sw>0 ) rw += CHS;
+    
+    trace(i+": "+max_width+" << "+sw+" ==> "+rw);
+
+    rows[i] = [rw,rh];
+    trace_on = false;
+  }
+  trace("merge: result = "+rowsToString(rows));
+  return rows;
+}
+
 function calc_segment(x0,y0,segment){
+  print("calc segment name="+segment.name);
   if( !segment.rows ) segment.rows = [];
   if( !segment.location ) segment.location = [];
   calc_person(x0,y0,segment);
@@ -79,45 +203,49 @@ function offset(x,y,code){
 
 function draw_segment(segment){
   
-  depth += 1;
+  var clr = BLACK;
+  if( depth == 0 ) clr = CYAN;
+  depth += 1; // remainder black
   
   offset(segment.location[X],segment.location[Y],function(){
-  
-        var clr = BLACK;
-        if( depth == 1 ) clr = CYAN;
-        draw_box(segment.location,segment.name,clr);
-        
-        if( segment.spouses){
-          offset(segment.location[W],0,function(){
-             for( var k=0; k<segment.spouses.length; k++ ){
-              var p = segment.spouses[k];
-              offset(p.location[X],0,function(){
-                  rect(-XW, PH/2-5, XW, 10); 
-                  draw_box(p.location,p.name,BLUE);
-              });
-            }
-          });
-        }
-      
-        var mid1, mid;
-        if( segment.children) {
-          for( var k=0; k<segment.children.length; k++ ){
-            var child = segment.children[k];
-            mid = child.location[0]+PW/2;
-            stroke(RED);
-            if( k==0 ){
-              mid1 = mid;
-              // upper half on the first child
-              line(mid,PH,mid,PH+CVS);
-            }
-            // lower half on every child
-            line(mid,PH+CVS/2,mid,PH+CVS);
-            draw_segment(child);
-          }
-          stroke(RED);
-          line(mid1,PH+CVS/2,mid,PH+CVS/2);
-        }
+      draw_box(segment.location,segment.name,clr);
+      draw_spouses(segment.spouses);
+      draw_children( segment.children );
   });   
+}
+
+function draw_spouses(spouses){
+  if( !spouses ) return
+    
+  for( var k=0; k<spouses.length; k++ ){
+      var p = spouses[k];
+      offset(p.location[X],0,function(){
+          stroke(BLUE);
+          rect(-XW, PH/2-5, XW, 10); 
+          draw_box(p.location,p.name,BLUE);
+      });
+  }
+}
+
+function draw_children(children){
+    if( !children ) return;
+    
+    var mid1, mid;
+    for( var k=0; k<children.length; k++ ){
+      var child = children[k];
+      mid = child.location[0]+PW/2;
+      stroke(RED);
+      if( k==0 ){
+        mid1 = mid;
+        // upper half on the first child
+        line(mid,PH,mid,PH+CVS);
+      }
+      // lower half on every child
+      line(mid,PH+CVS/2,mid,PH+CVS);
+      draw_segment(child);
+    }
+    stroke(RED);
+    line(mid1,PH+CVS/2,mid,PH+CVS/2);
 }
 
 function draw_box(location,name,clr){
@@ -128,61 +256,23 @@ function draw_box(location,name,clr){
 }
 
 function calc_person(x0,y0,segment){
-  //print("calc person: name = "+segment.name+"  "+x0+","+y0);
-  // a person block is a single row of fixed size
-  // located at the current origin of the diagram
+  //trace("calc person: name = "+segment.name+"  "+x0+","+y0);
   segment.location = [x0,y0,PW,PH];
-  segment.rows = [[PW,PH]];
-}
-  
-function calc_spouses(segment){
-  var spouses = segment.spouses;
-  if( !spouses || spouses.length == 0 ) return;
-  // spouses are still only on the first row only
-  // we assume that the main person has been added
-  // and we are NOT treating spouses as a segemnt
-  var high = segment.location[H];   // height of this row
-  var wide = segment.location[W];   // width of this row
-  var x = 0;      // starting X of first spouse
-  var y = 0;      // all spouses at same Y as person
-  for( var s=0; s<spouses.length; s++ ){
-    var spouse = spouses[s];
-    calc_person(x+XW,y,spouse);
-    x = spouse.location[X] + spouse.location[W];
-    wide += XW + spouse.location[W];
-    high = Math.max(high,spouse.location[H])
-  }
-  segment.rows[0][0] = wide;
-  segment.rows[0][1] = high;
-}
-
-function calc_children(segment){
-  var children = segment.children;
-  if( !children || children.length == 0 ) return;
-
-  var wide = 0;
-  var high = 0;
-  var x = 0;         // first child X position
-  var y = segment.location[H] +CVS;   // all children Y position
-  
-  //print("calc children of "+segment.name+"  at "+x+","+y+"  length="+children.length);
-
-  for( var i=0; i<children.length; i++ ){
-    var child = children[i];
-    calc_segment(x,y,child);
-    //print_segment(child);
-    var w = maxWidthFrom(child.rows);
-    var h = child.rows[0][1];
-    wide += CHS + w;
-    high = Math.max(high,h);
-    x += CHS + w; // shift right
-  }
-  segment.rows.push([wide,high]);
+  segment.rows = [[PW,PH]]; // single row
 }
 
 function maxWidthFrom(rows){
   var wide = 0;
   for( var i=0; i<rows.length; i++ ){
+    wide = Math.max(wide,rows[i][0]);
+  }
+  return wide;
+}
+
+function maxWidthFromPortion(rows,len){
+  var wide = 0;
+  var m = Math.min(len,rows.length);
+  for( var i=0; i<m; i++ ){
     wide = Math.max(wide,rows[i][0]);
   }
   return wide;
@@ -207,19 +297,20 @@ function draw_frame(wide,deep) {
 }
 
 function print_segment(segment){
-      print("name: "+segment.name);
-      print("loc: "+segment.location);
-      print("rows: "+rowsToString(segment.rows));
+      trace("name: "+segment.name);
+      trace("loc: "+segment.location);
+      trace("rows: "+rowsToString(segment.rows));
       if(segment.spouces) for( var k=0; k<segment.spouses.length; k++ ){
-        print("spouse "+(k+1)+" location = "+segment.spouses[k].location);
+        trace("spouse "+(k+1)+" location = "+segment.spouses[k].location);
       }
       if(segment.children) for( var i=0; i<segment.children.length; i++ ) print_segment(segment.children[i]);
 }
 
 function rowsToString(rows){
-  result = "";
-  for( var i=0; i<rows.length; i++) result += "   "+i+": ["+rows[i]+"]";
-  return result;
+  if( !rows ) return "undefined";
+  result = " [";
+  for( var i=0; i<rows.length; i++) result += rows[i][0]+",";
+  return result+"]";
 }
 
 function proof(clr,w,h){
