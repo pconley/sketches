@@ -6,17 +6,7 @@ function setup() {
   noLoop();
 }
 
-var PW = 60;    // person width
-var PH = 40;    // person height
 
-var CHS = 10;   // child horizontal spaces
-var CVS = 40;   // child vertical spacer
-
-var XW = CHS;   // spouse connector width
-var XH = 10;    // spouse connector height
-var XT = PH/2-XH/2;  // connectpersonor top
-
-var trace_on = false;
 var generation = 0;
 
 function draw(){
@@ -31,7 +21,7 @@ function draw(){
   var pat    = new Person("pat", [new Person("mary jo")], p_kids);
   var wives  = [new Person("michelle"),new Person("margaret")];
   var mike   = new Person("mike", wives);
-  var sibs   = [mike,pat,elaine,jim,tom,dan];
+  var sibs   = [mike,pat,elaine]; //,jim,tom,dan];
   var jerry  = new Person("jerry", [new Person("ruth")], sibs);
 
   var sps1 = new Person("spouse1", [], [new Person("surprise")]);;
@@ -79,11 +69,11 @@ function offset(x,y,code){
 }
 
 function maxWidthFrom(rows){
-  var wide = 0;
-  for( var i=0; i<rows.length; i++ ){
-    wide = Math.max(wide,rows[i][0]);
-  }
-  return wide;
+  return widths(rows).reduce( maxOf, 0 );
+}
+
+function widths(rows){
+  return rows.map(function(row){ return row[0]; });
 }
 
 function draw_frame(wide,deep) {
@@ -94,15 +84,10 @@ function draw_frame(wide,deep) {
 
 function rowsToString(rows){
   if( !rows ) return "undefined";
-  result = " [";
-  for( var i=0; i<rows.length; i++){
-    result += rows[i][0]+",";
-  }
-  return result+"]";
+  return " [" + widths(rows).join() + "]";
 }
 
 function proof(clr,w,h){
-  //trace("proof w="+w+" h="+h);
   stroke(clr); noFill();
   rect(0,0,w,h);
 }

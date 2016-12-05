@@ -1,35 +1,33 @@
-var RH = 40;
-
-function sumOf(a,b){ return a+b; }
-function countOf(arr){ var cnt=0; if(arr) cnt=arr.length; return cnt; }
+var PW = 60;    // person width
+var PH = 40;    // person height
+var CHS = 10;   // child horizontal spaces
+var CVS = 40;   // child vertical spacer
+var XW = CHS;   // spouse connector width
+var XH = 10;    // spouse connector height
 
 function Group(name,set,gen){
 
   this.set = set || [];
   this.gen = gen || 0;
   this.name = name;
-  this.rows = [];
   
+  this.rows = [];
   var that = this;
-
-  //print("*** group: "+that.name);
-  // calculate the group rows profile
+  // calculate the rows based on the person set
   this.set.forEach(function(person){
-    //print("-- "+that.name+": "+person.name+" group rows = "+rowsToString(that.rows));
-    //print("-- "+that.name+": "+person.name+" person rows = "+rowsToString(person.rows));
-    person.set_gen(gen);
-    var offset = maxOfPartial(that.rows,person.rows);
-    if( offset>0 ) offset += CHS;
-    person.shift(offset,0);
-    that.rows = merge(that.rows,person.rows,false);
+      person.set_gen(gen);
+      var offset = maxOfPartial(that.rows,person.rows);
+      if( offset>0 ) offset += CHS;
+      person.shiftBox(offset,0);
+      that.rows = merge(that.rows,person.rows,false);
   });
-  //print("-- "+this.name+" final rows = "+rowsToString(that.rows));
 
-  this.shift = function(x,y){
-    //print("group shifting by "+x+","+y);
-    that.set.forEach(function(person){ 
-      person.shift(x,y); 
-    });
+  this.shiftBoxes = function(x,y){
+    that.set.forEach(function(person){ person.shiftBox(x,y); });
+  }
+
+  this.set_gen = function(g){
+    this.set.forEach(function(person){ person.set_gen(g); });
   }
 
   this.draw = function(){
@@ -49,56 +47,48 @@ function Person(name,spouses,children){
   this.y = 0;
   this.w = PW;
   this.h = PH;
-  this.generation = 0;
   this.name = name;
+  this.generation = 0;
   this.spouses = new Group(name+" spouses",spouses);
   this.children = new Group(name+" children",children); 
   
-  // the person calculation is simple
-  this.rows = [[PW,PH]];
+  // the starting set of rows
+  this.rows = [[this.w,this.h]];
   
   //print("~~~ person: "+name+" create c="+this.children.set.length);
 
   // the children hang directly under the person
-  // but one row lower, so only y needs to change
+  // but only one row lower, so only y needs to change
   if( this.children.set.length > 0 ){
-      var c_y = this.h + CVS;
-      this.children.shift(0,c_y);
-      //print("~~~ person: "+this.name+" C rows="+rowsToString(this.children.rows));
+      this.children.shiftBoxes(0,this.h + CVS);
       this.rows = this.rows.concat(this.children.rows);
-      //print("~~~ person: "+this.name+" after C rows="+rowsToString(this.rows));
   }
 
   // spouses are to the right of the person but
   // on the same row... so only X changes
   if( this.spouses.set.length > 0 ){
     var s_rows = this.spouses.rows;
-    //print("~~~ person: "+this.name+" this rows="+rowsToString(this.rows));
-    //print("~~~ person: "+this.name+" S rows="+rowsToString(s_rows));
-    var setoff = maxOfPartial(this.rows,s_rows) + CHS;
-    //print("~~~ setoff = "+setoff);
-    this.spouses.shift(setoff,0);
+    var setoff = maxOfPartial(this.rows,s_rows);
+    this.spouses.shiftBoxes(setoff+CHS,0);
     this.rows = merge(this.rows,s_rows,false);
   }
   //print("~~~ person: "+this.name+" final rows="+rowsToString(this.rows));
 
-  this.set_pos = function(x,y){ this.x=x; this.y=y; }
+  this.set_pos = function(x,y){ this.x = x; this.y = y; }
+  this.shiftBox = function(x,y){ this.x += x; this.y += y; }
   
-  this.set_gen =function(g){ this.generation = g; }
+  this.set_gen =function(g){ 
+    this.generation = g; 
+    this.spouses.set_gen(g+.5);
+    this.children.set_gen(g+1);
+  }
     
   this.grands = function(){
     if( !this.children ) return 0;
-    var count = this.children.set.map(function(c){ return countOf(c.children); }).reduce(sumOf, 0);
-    return count;
+    // returns the sume of the count of the children's children
+    return this.children.set.map(function(c){ return countOf(c.children); }).reduce(sumOf, 0);
   }
   
-  this.shift = function(x,y){
-    //print("person shift of "+this.name+" by "+x+","+y);
-    this.x += x;
-    this.y += y;
-    //for( var i=0; i<this.rows.length; i++ ) this.rows[i].shift(d);
-  }
-
   this.draw = function(clr){
     //print("person.draw  = "+this.name);
     translate(this.x,this.y);
@@ -151,48 +141,21 @@ function Person(name,spouses,children){
     stroke(RED);
     line(mid1,PH+CVS/2,mid,PH+CVS/2);
   }
-  
-  this.tos = function(){
-    var result = "P: "+this.name;
-    var s_str = "";
-    //print("spouses set = "+this.spouses.set.length);
-    if( this.spouses && this.spouses.set ) s_str = this.spouses.set.map(function(s){return s.name;}).join();
-    result += " ("+s_str+")";
-    var c_str = "";
-    var cnt = 0; if( this.children ) cnt = this.children.length;
-    result += " ("+cnt+" kids)";
-    var g = this.grands();
-    result += " ("+g+" gnds)";
-    return "["+result+"]";
-  }
 }
 
 function maxOfPartial(left,right){
-  //print("maxOfPartial: left"); print(left);
-  //print("maxOfPartial: right"); print(right);
   // returns the max width from the left side, based
   // on the depth of the right side so that the right
   // can "fit" into the profile of the left
-  var wide = 0;
   var m = Math.min(right.length,left.length);
-  for( var i=0; i<m; i++ ){
-    //print("wide="+wide+" left="+left[i][0]);
-    wide = Math.max(wide,parseInt(left[i][0]));
-  }
-  //print("wide="+wide);
-  return wide;
+  var partial = left.slice(0,m);
+  return widths(partial).reduce( maxOf, 0 );
 }
 
 function merge(left, right, debug){
   // this is the heart of the "fitting" mechanism that merges the
   // profiles (rows) of the existing left object by adding the right
-  
-  if( debug ) print("merge: left ="+rowsToString(left));
-  if( debug ) print(left);
-  if( debug ) print("merge: right ="+rowsToString(right));
-  if( debug ) print("merge: R = "+right.length);
-  if( debug ) print("merge: L = "+left.length);
-
+ 
   // if no left, return copy of right
   if( !left ) return right.slice(0);
   
@@ -224,11 +187,9 @@ function merge(left, right, debug){
     rows[i] = [w,h];
   }
   // show you work for unit tests
-  if( debug ){
-    print("merge: left = "+rowsToString(left));
-    print("merge: right = "+rowsToString(right));
-    print("merge: result = "+rowsToString(rows));
-  }
+  if( debug ) print("merge: left = "+rowsToString(left));
+  if( debug ) print("merge: right = "+rowsToString(right));
+  if( debug ) print("merge: result = "+rowsToString(rows));
   return rows;
 }
 
@@ -238,4 +199,3 @@ function val(x,n){
   var v = 0; if(x && x[n]) v=x[n];
   return v;
 }
-

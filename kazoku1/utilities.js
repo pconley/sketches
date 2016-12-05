@@ -10,3 +10,12 @@ function setColors(){
   GRAY   = 125;
   ORANGE = 204;
 }
+
+// functions to use with reduce
+
+function sumOf(a,b){ return a+b; }
+function maxOf(a,b){ return Math.max(a,b); }
+
+// general utils
+
+function countOf(arr){ var cnt=0; if(arr) cnt=arr.length; return cnt; }
