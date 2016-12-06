@@ -34,8 +34,8 @@ function Group(name,set,gen){
   };
   
   this.get_width = function(){ return max_width(this.rows); }
+  
   this.get_height = function(){ return total_height(this.rows); }
-  //this.get_height = function(){ return PH + (PH+CVS) * (this.rows.length-1); }
 
   this.print = function(label){
     print("=== "+label);
