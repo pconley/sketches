@@ -7,33 +7,36 @@ var XH = 10;    // spouse connector height
 
 function Group(name,set,gen){
 
-  this.set = set || [];
-  this.gen = gen || 0;
   this.name = name;
-  
   this.rows = [];
-  var that = this;
-  // calculate the rows based on the person set
-  this.set.forEach(function(person){
-      person.set_gen(gen);
-      var offset = maxOfPartial(that.rows,person.rows);
-      if( offset>0 ) offset += CHS;
-      person.shiftBox(offset,0);
-      that.rows = merge(that.rows,person.rows,false);
-  });
-
-  this.shiftBoxes = function(x,y){
-    that.set.forEach(function(person){ person.shiftBox(x,y); });
-  }
-
+  this.set = ifdef(set,[]);
+  
   this.set_gen = function(g){
     this.set.forEach(function(person){ person.set_gen(g); });
+  }
+
+  this.set_gen(ifdef(gen,0));
+  
+  // calculate the boxes and rows based on the person set
+  this.set.forEach(function(person){
+      var offset = max_of_left(this.rows,person.rows);
+      if( offset>0 ) offset += CHS;
+      person.shift_box(offset,0);
+      this.rows = merge(this.rows,person.rows,false);
+  },this);
+
+  this.shift_boxes = function(x,y){
+    this.set.forEach(function(person){ person.shift_box(x,y); });
   }
 
   this.draw = function(){
     this.set.forEach(function(person){ person.draw(); });
   };
   
+  this.get_width = function(){ return max_width(this.rows); }
+  this.get_height = function(){ return total_height(this.rows); }
+  //this.get_height = function(){ return PH + (PH+CVS) * (this.rows.length-1); }
+
   this.print = function(label){
     print("=== "+label);
     print("=== "+this.name+" group of "+this.set.length+" person");
@@ -45,50 +48,47 @@ function Person(name,spouses,children){
 
   this.x = 0;
   this.y = 0;
-  this.w = PW;
-  this.h = PH;
+  this.box_w = PW;
+  this.box_h = PH;
   this.name = name;
   this.generation = 0;
-  this.spouses = new Group(name+" spouses",spouses);
-  this.children = new Group(name+" children",children); 
+  this.spouses = new Group(name+" spouses",spouses,0);
+  this.children = new Group(name+" children",children,0); 
   
-  // the starting set of rows
-  this.rows = [[this.w,this.h]];
+  // the starting set of rows for the person
+  this.rows = [[this.box_w,this.box_h]];
   
   //print("~~~ person: "+name+" create c="+this.children.set.length);
 
   // the children hang directly under the person
   // but only one row lower, so only y needs to change
   if( this.children.set.length > 0 ){
-      this.children.shiftBoxes(0,this.h + CVS);
-      this.rows = this.rows.concat(this.children.rows);
+    // move the child boxes down one row height
+    this.children.shift_boxes(0,this.box_h + CVS);
+    // add the children rows to this set of rows
+    this.rows = this.rows.concat(this.children.rows);
   }
 
   // spouses are to the right of the person but
   // on the same row... so only X changes
   if( this.spouses.set.length > 0 ){
-    var s_rows = this.spouses.rows;
-    var setoff = maxOfPartial(this.rows,s_rows);
-    this.spouses.shiftBoxes(setoff+CHS,0);
-    this.rows = merge(this.rows,s_rows,false);
+    // calc max width of the current profile
+    var max_left = max_of_left(this.rows,this.spouses.rows);
+    // move the spouse boxes to the right of profile
+    this.spouses.shift_boxes(max_left+CHS,0);
+    // change the rows profile of this person
+    this.rows = merge(this.rows,this.spouses.rows,false);
   }
   //print("~~~ person: "+this.name+" final rows="+rowsToString(this.rows));
 
-  this.set_pos = function(x,y){ this.x = x; this.y = y; }
-  this.shiftBox = function(x,y){ this.x += x; this.y += y; }
+  this.shift_box = function(x,y){ this.x += x; this.y += y; }
   
-  this.set_gen =function(g){ 
+  this.set_gen = function(g){ 
     this.generation = g; 
-    this.spouses.set_gen(g+.5);
-    this.children.set_gen(g+1);
+    this.spouses.set_gen(g+0.5);
+    this.children.set_gen(g+1.0);
   }
-    
-  this.grands = function(){
-    if( !this.children ) return 0;
-    // returns the sume of the count of the children's children
-    return this.children.set.map(function(c){ return countOf(c.children); }).reduce(sumOf, 0);
-  }
-  
+
   this.draw = function(clr){
     //print("person.draw  = "+this.name);
     translate(this.x,this.y);
@@ -104,21 +104,23 @@ function Person(name,spouses,children){
     // override the first generation with a color
     var c = base; if (this.generation==0) c=RED;
     stroke(c); // fill(WHITE);
-    rect(0, 0, this.w, this.h);
-    text(this.name,10,15);
+    //rect(0, 0, this.w, this.h);
+    rect(0, 0, this.box_w, this.box_h);
+    text(""+this.name,10,15);
   }
 
   this.draw_spouses = function(clr){
     if( this.spouses.set.length == 0 ) return;
-    var cx = PW; // first connector X
+    var cx = this.box_w; // first connector X
     //print("draw spouses for "+this.name+" at "+cx);
-    this.spouses.set.forEach( function(person){
+    this.spouses.set.forEach( function(spouse){
         // draw the connector
         stroke(clr);
-        var sx = person.x;
+        var sx = spouse.x;
         rect(cx, PH/2-5, sx-cx, 5); 
-        cx = sx+PW; // next connector X
-        person.draw(clr);
+        // calculate next connector X 
+        cx = sx+spouse.box_w; 
+        spouse.draw(clr);
     });
   }
 
@@ -143,13 +145,20 @@ function Person(name,spouses,children){
   }
 }
 
-function maxOfPartial(left,right){
+///**** row helpers
+
+function widths(rows){ return rows.map(function(row){ return row[0]; }); }
+function max_width(rows){ return widths(rows).reduce( maxOf, 0 ); };
+// note: row heights do not include spacers; so we adjust for those
+function heights(rows){ return rows.map(function(row){ return row[1]+CVS; }); }
+function total_height(rows){ return heights(rows).reduce( sumOf, 0 )-CVS; };
+
+function max_of_left(left,right){
   // returns the max width from the left side, based
   // on the depth of the right side so that the right
   // can "fit" into the profile of the left
   var m = Math.min(right.length,left.length);
-  var partial = left.slice(0,m);
-  return widths(partial).reduce( maxOf, 0 );
+  return max_width(left.slice(0,m));
 }
 
 function merge(left, right, debug){
@@ -160,7 +169,7 @@ function merge(left, right, debug){
   if( !left ) return right.slice(0);
   
   var rows = []; // the resulting profile
-  var max_left = maxOfPartial(left,right);
+  var max_left = max_of_left(left,right);
   if( debug ) print("max left="+max_left);
 
   // construct profile sized to the larger 
