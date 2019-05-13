@@ -61,6 +61,7 @@ ACTION_COLUMN_INDEX = 1
 NAME_COLUMN_INDEX = 2
 
 ADD_DROPLET = "add_droplet"
+DELETE_HSM = "del_hsm"
 ADD_HSM = "add_hsm"
 
 const process_server_file = (timeCounter) => {
@@ -79,7 +80,14 @@ const process_server_file = (timeCounter) => {
       const hsm_color = trim(server_table.getString(server_row_index,4));
       console.log(timeCounter, "read: ", action, server_name, hsm_name, hsm_color);
       server = servers[server_name];
-      server.add_hsm(new Hsm(n,hsm_color))
+      server.add_hsm(new Hsm(n,hsm_name,hsm_color))
+    } 
+    if( action == DELETE_HSM ){
+      const server = servers[server_name]; // TODO: what if error
+      const hsm_name = trim(server_table.getString(server_row_index,3));
+      console.log(timeCounter, "read: ", action, server_name, hsm_name);
+      const found = server.hsms.findIndex(hsm => hsm.name == hsm_name);
+      server.hsms.splice(found,1);
     } 
   }
 }

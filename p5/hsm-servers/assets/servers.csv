@@ -3,6 +3,14 @@ Frame,Action,Name,Attr1,Attr2
 100, add_droplet, 1.1.1.2, red
 120, add_droplet, 1.1.1.33, yellow
 140, add_hsm, 1.1.1.2, fred, red
+150, add_hsm, 1.1.1.2, fred2, pink
+160, add_hsm, 1.1.1.2, fred3, red
 200, add_hsm, 1.1.1.1, ted, white
 200, add_hsm, 1.1.1.33, mary, blue
 250, add_hsm, 1.1.1.33, test, green
+280, del_hsm, 1.1.1.2, fred2
+290, del_hsm, 1.1.1.2, fred
+300, del_hsm, 1.1.1.2, fred3
+340, add_hsm, 1.1.1.2, pat1, red
+350, add_hsm, 1.1.1.2, pat2, white
+360, add_hsm, 1.1.1.2, pat3, blue
