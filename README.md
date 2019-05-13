@@ -1,3 +1,29 @@
+### RESTART 2019 ###
+
+the new work is in p5 folder and uses stuff from 
+
+https://p5js.org/reference/
+
+I am using a local server so that I can access data files
+
+Setup:
+
+npm install -g http-server
+
+then from the /Users/pat/Projects/Sketches/p5
+
+http-server
+
+then browse at: http://127.0.0.1:8080/cms-customers/index.html
+
+#### projects
+
+
+cms-customers : refreshed from ealier work
+
+
+
+
 # README #
 
 This is a set of experimental projects using "Processing" from https://processing.org/
