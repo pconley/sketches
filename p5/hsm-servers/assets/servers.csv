@@ -1,8 +1,8 @@
-Moment,Action,Name,Attr1,Attr2
-5, add_droplet, 1.1.1.1, blue
-10, add_droplet, 1.1.1.2, red
-12, add_droplet, 1.1.1.33, yellow
-14, add_hsm, 1.1.1.2, fred, red
-20, add_hsm, 1.1.1.1, ted, white
-20, add_hsm, 1.1.1.33, mary, blue
-25, add_hsm, 1.1.1.33, test, green
+Frame,Action,Name,Attr1,Attr2
+50, add_droplet, 1.1.1.1, blue
+100, add_droplet, 1.1.1.2, red
+120, add_droplet, 1.1.1.33, yellow
+140, add_hsm, 1.1.1.2, fred, red
+200, add_hsm, 1.1.1.1, ted, white
+200, add_hsm, 1.1.1.33, mary, blue
+250, add_hsm, 1.1.1.33, test, green

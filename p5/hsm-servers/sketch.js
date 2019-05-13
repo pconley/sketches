@@ -23,15 +23,15 @@ function setup() {
   // noLoop(); // Run once and stop
 }
 
-const process_speed = 20; 
+// const process_speed = 10; 
 const movement_speed = 10; 
 // var loop_rate = 15;
 // var start_week = 0; //100; // 0;
 
 function draw() {
-  console.log("draw", frameCount);
+  if( frameCount%10 == 0 ) console.log("draw", frameCount);
 
-  process_server_file(frameCount/process_speed)
+  process_server_file(frameCount)
 
   background(BLACK); // clears canvas
 
@@ -65,21 +65,21 @@ ADD_HSM = "add_hsm"
 
 const process_server_file = (timeCounter) => {
   // read all the unread rows for time less or equal now
-  while( next_row_time(server_table) <= timeCounter ){
+  while( (n=next_row_time(server_table)) <= timeCounter ){
     server_row_index += 1
     const action = trim(server_table.getString(server_row_index,ACTION_COLUMN_INDEX));
     const server_name = trim(server_table.getString(server_row_index,NAME_COLUMN_INDEX));
     if( action == ADD_DROPLET ){
       const color = trim(server_table.getString(server_row_index,3));
       console.log(timeCounter, "read: ", action, server_name, color);
-      servers[server_name] = new Server(name, color);
+      servers[server_name] = new Server(server_name, color);
     } 
     if( action == ADD_HSM ){
       const hsm_name = trim(server_table.getString(server_row_index,3));
       const hsm_color = trim(server_table.getString(server_row_index,4));
       console.log(timeCounter, "read: ", action, server_name, hsm_name, hsm_color);
       server = servers[server_name];
-      server.add_hsm(new Hsm(hsm_color))
+      server.add_hsm(new Hsm(n,hsm_color))
     } 
   }
 }
@@ -100,28 +100,3 @@ const load_table = (filename) => {
   });
   return table
 };
-
-const static_data = () => {
-
-  const r = new Hsm(RED)
-  const g = new Hsm(GREEN)
-  const b = new Hsm(BLUE)
-
-  const s1 = new Server("10.10.100.1");
-  s1.add_hsm(r);
-  s1.add_hsm(g);
-  s1.add_hsm(b);
-  const s2 = new Server("10.10.100.2");
-  s2.add_hsm(g);
-  s2.add_hsm(g);
-  const s3 = new Server("10.10.200.99");
-  s3.add_hsm(g);
-  s3.add_hsm(b);
-  s3.add_hsm(g);
-  s3.add_hsm(r);
-
-  const newstate = [s1,s2,s3]
-
-  return newstate
-}
-
