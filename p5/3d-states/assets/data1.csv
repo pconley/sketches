@@ -1,0 +1,25 @@
+Frame,Action,Name,Attr1,Attr2
+10, add_zone, IAD6, red
+10, add_zone, IAD7, white
+10, add_zone, IAD12, blue
+50, add_server, 1.1.6.1, IAD6, hotpink
+100, add_server, 1.1.6.2, IAD6, lightpink
+100, add_server, 1.1.7.1, IAD7, gray
+120, add_server, 1.1.12.1, IAD12, lightskyblue
+120, add_server, 1.1.12.2, IAD12, cadetblue
+140, add_hsm, fred, 1.1.6.2, cluster1, red
+150, add_hsm, fred2, 1.1.6.2, cluster2, pink
+160, add_hsm, fred3, 1.1.6.2, cluster3, red
+200, add_hsm, ted, 1.1.6.1, cluster1, white
+200, add_hsm, mary, 1.1.12.1, cluster1, blue
+250, add_hsm, test, 1.1.12.1, cluster4, green
+280, del_hsm, ted
+290, del_hsm, fred
+300, del_hsm, fred3
+340, add_hsm, pat1, 1.1.6.1, cluster5, red
+350, add_hsm, pat2, 1.1.6.2, cluster2, white
+360, add_hsm, pat3, 1.1.12.1, cluster3, blue
+365, add_hsm, pat4, 1.1.6.2, cluster5, red
+370, add_hsm, pat5, 1.1.12.1, cluster4, white
+380, add_hsm, pat6, 1.1.6.2, cluster4, blue
+500, del_hsm, pat2

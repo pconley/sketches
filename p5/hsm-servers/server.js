@@ -4,17 +4,24 @@ const HSM_PER_SERVER = 10
 const HSM_HEIGHT = SERVER_HEIGHT / HSM_PER_SERVER;
 
 class Hsm {
-    constructor(_arrivalFrameCount, _name, _color="white") {
+    constructor(_name, _color="white") {
         const color = COLORS[_color]; 
         this.name = _name;
-        this.arrival = _arrivalFrameCount;
+        this.current_top = 0; 
         this.draw = (_left, _top, _width, _height) => {
+            // we want to end up at the target top, but
+            // get there over time from the current_top
+            const target_top = _top;
+            const drop_speed = 3 // pixels per frame
+            this.current_top = Math.min(
+                target_top, 
+                this.current_top+drop_speed
+            );
             stroke(color); fill(color);
-            rect(_left, _top, _width, _height);
-
+            rect(_left, this.current_top, _width, _height);
             stroke(BLACK); fill(BLACK);
             textAlign(CENTER);
-            text(this.name, _left + _width / 2, _top+3+HSM_HEIGHT/2);
+            text(this.name, _left + _width / 2, this.current_top+3+HSM_HEIGHT/2);
         };
     }
 }

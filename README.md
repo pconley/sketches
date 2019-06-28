@@ -16,6 +16,8 @@ http-server
 
 then browse at: http://127.0.0.1:8080/cms-customers/index.html
 
+http://127.0.0.1:8080/hsm-clusters/index.html
+
 #### projects
 
 

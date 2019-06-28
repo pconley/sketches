@@ -37,18 +37,20 @@ function draw() {
 
   push(); // save draw state
 
-  const distance_between_server_left = 120
+  circle(30, 30, 20);
 
-  var server_num = 0;
-  for (var name in servers) {
-    offset = frameCount / movement_speed
-    server = servers[name]
-    // using framecount to move servers down and over
-    const top = offset+10;
-    const left = distance_between_server_left*server_num+offset;
-    server.draw(left, top);
-    server_num += 1
-  }
+  // const distance_between_server_left = 120
+
+  // var server_num = 0;
+  // for (var name in servers) {
+  //   offset = frameCount / movement_speed
+  //   server = servers[name]
+  //   // using framecount to move servers down and over
+  //   const top = offset+10;
+  //   const left = distance_between_server_left*server_num+offset;
+  //   server.draw(left, top);
+  //   server_num += 1
+  // }
 
   pop(); // restore draw state
 
@@ -66,7 +68,7 @@ ADD_HSM = "add_hsm"
 
 const process_server_file = (timeCounter) => {
   // read all the unread rows for time less or equal now
-  while( (n=next_row_time(server_table)) <= timeCounter ){
+  while( next_row_time(server_table) <= timeCounter ){
     server_row_index += 1
     const action = trim(server_table.getString(server_row_index,ACTION_COLUMN_INDEX));
     const server_name = trim(server_table.getString(server_row_index,NAME_COLUMN_INDEX));
@@ -80,14 +82,15 @@ const process_server_file = (timeCounter) => {
       const hsm_color = trim(server_table.getString(server_row_index,4));
       console.log(timeCounter, "read: ", action, server_name, hsm_name, hsm_color);
       server = servers[server_name];
-      server.add_hsm(new Hsm(n,hsm_name,hsm_color))
+      // const hsm_index = server.length;
+      server.add_hsm(new Hsm(hsm_name, hsm_color))
     } 
     if( action == DELETE_HSM ){
       const server = servers[server_name]; // TODO: what if error
       const hsm_name = trim(server_table.getString(server_row_index,3));
       console.log(timeCounter, "read: ", action, server_name, hsm_name);
-      const found = server.hsms.findIndex(hsm => hsm.name == hsm_name);
-      server.hsms.splice(found,1);
+      delete server.hsms[hsm[hsm_name]];
+      delete cluster.hsms[hsm[hsm_name]];
     } 
   }
 }

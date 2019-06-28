@@ -14,3 +14,7 @@ Frame,Action,Name,Attr1,Attr2
 340, add_hsm, 1.1.1.2, pat1, red
 350, add_hsm, 1.1.1.2, pat2, white
 360, add_hsm, 1.1.1.2, pat3, blue
+365, add_hsm, 1.1.1.2, pat4, red
+370, add_hsm, 1.1.1.2, pat5, white
+380, add_hsm, 1.1.1.2, pat6, blue
+500, del_hsm, 1.1.1.2, pat2
